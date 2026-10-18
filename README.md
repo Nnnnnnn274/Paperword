@@ -47,15 +47,4 @@ Generated Word documents use the `.docx` format and open in Microsoft Word, Goog
 
 ## Publish to GitHub Pages
 
-Pages serves the built files from the root of the `gh-pages` branch. After editing the site:
-
-```sh
-npm run build
-npm test
-git add .
-git commit -m "Update site"
-git push origin main
-git subtree split --prefix dist -b pages-release
-git push origin pages-release:gh-pages
-git branch -D pages-release
-```
+Pages serves the built files from the root of the `gh-pages` branch. After editing the source, run `npm run build` and `npm test`, commit the source changes to `main`, and copy the contents of `dist` (including `.nojekyll`) to the root of `gh-pages`. Push that branch to deploy. In Settings → Pages, keep the publishing source set to `gh-pages` and `/ (root)`.
