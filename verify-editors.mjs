@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {PDFDocument,StandardFonts,degrees} from 'pdf-lib';
+import {getDocument} from 'pdfjs-dist/legacy/build/pdf.mjs';
+import mammoth from 'mammoth';
+import {JSDOM} from 'jsdom';
+import {exportEditedPdf,mergePdfs} from './pdf-tools.mjs';
+import {exportWord} from './word-tools.mjs';
+const input=await PDFDocument.create();const font=await input.embedFont(StandardFonts.Helvetica);
+for(const text of ['Remove me','Keep me','Last page']){input.addPage([500,700]).drawText(text,{x:40,y:600,font,size:18});}
+const source=await input.save();
+const fontBytes=new Uint8Array(await readFile('dist/assets/standard_fonts/LiberationSans-Regular.ttf'));
+const states=[{index:1,rotation:90,removed:false,notes:[{text:'Reviewed ✓',x:50,y:100,size:16,color:'#205943',rotation:0}]},{index:0,rotation:0,removed:true,notes:[]},{index:2,rotation:0,removed:false,notes:[]}];
+const output=await exportEditedPdf(source,states,fontBytes);const opened=await PDFDocument.load(output);assert.equal(opened.getPageCount(),2);assert.equal(opened.getPage(0).getRotation().angle,90);
+const parsed=await getDocument({data:output.slice(),useSystemFonts:true}).promise;let contents=[];for(let i=1;i<=parsed.numPages;i++){const page=await parsed.getPage(i);contents.push((await page.getTextContent()).items.map(x=>x.str).join(' '));}assert(contents[0].includes('Keep me'));assert(contents[0].includes('Reviewed'));assert(contents[1].includes('Last page'));assert(!contents.join(' ').includes('Remove me'));await parsed.destroy();
+const merged=await PDFDocument.load(await mergePdfs([source,output]));assert.equal(merged.getPageCount(),5);
+await assert.rejects(()=>mergePdfs([source]),/at least two/);await assert.rejects(()=>exportEditedPdf(source,states.map(s=>({...s,removed:true})),null),/at least one/);
+const dom=new JSDOM('<div id="editor"><h1>Project notes</h1><p><b>Bold words</b> and <i>italic words</i> with <u>underline</u>.</p><ul><li>First task</li><li>Second task</li></ul><table><tr><td>Column A</td><td>Column B</td></tr></table><p style="text-align:center">Centered</p></div>');
+const bytes=await exportWord(dom.window.document.getElementById('editor'),'Project notes');
+const result=await mammoth.convertToHtml({buffer:Buffer.from(bytes)});assert.match(result.value,/<h1>Project notes<\/h1>/);assert.match(result.value,/<strong>Bold words<\/strong>/);assert.match(result.value,/<em>italic words<\/em>/);assert.match(result.value,/<li>First task<\/li>/);assert.match(result.value,/<td><p>Column B/);
+const html=await readFile('dist/index.html','utf8');const page=new JSDOM(html);const ids=[...page.window.document.querySelectorAll('[id]')].map(n=>n.id);assert.equal(new Set(ids).size,ids.length);const js=await readFile('editors.mjs','utf8');for(const [,id]of js.matchAll(/\$\('([^']+)'\)/g))assert(ids.includes(id),`Missing UI element ${id}`);
+console.log('Verified PDF notes, rotation, removal, ordering, merging, Word headings/emphasis/lists/tables, and UI references.');

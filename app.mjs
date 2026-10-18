@@ -23,3 +23,5 @@ $('convert').onclick=async()=>{
 };
 $('sample').onclick=async()=>{try{const response=await fetch(new URL('../sample.pdf',import.meta.url));if(!response.ok)throw Error('Sample unavailable. Please choose your own PDF.');await select(new File([await response.blob()],'a-fresh-start.pdf',{type:'application/pdf'}));$('converter').scrollIntoView({behavior:'smooth',block:'center'});}catch(e){$('dropzone').hidden=true;$('work-area').hidden=false;status(e.message,true);$('convert').disabled=true;}};
 window.addEventListener('beforeunload',()=>{if(downloadUrl)URL.revokeObjectURL(downloadUrl);});
+
+import './editors.mjs';
