@@ -1,0 +1,21 @@
+{
+  "name": "paperword",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node verify.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "docx": "^9.5.1",
+    "esbuild": "^0.25.11",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "private": true
+}

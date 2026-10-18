@@ -1,0 +1,11 @@
+import {getDocument} from 'pdfjs-dist/legacy/build/pdf.mjs';
+import {readFile,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {convertPdf} from './conversion.mjs';
+const pdf=await getDocument({data:new Uint8Array(await readFile('dist/sample.pdf')),useSystemFonts:true}).promise;
+const result=await convertPdf(pdf);assert.equal(result.textPages,1);assert.equal(result.blankPages.length,0);assert(result.bytes.length>1000);await writeFile(join(tmpdir(),'paperword-test.docx'),result.bytes);await pdf.destroy();
+await assert.rejects(()=>convertPdf({numPages:201}),/200 pages/);
+await assert.rejects(()=>convertPdf({numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]}),cleanup(){}})}),/No selectable text/);
+console.log('Verified real PDF conversion, empty/scanned PDF handling, and page limit.');
