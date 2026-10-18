@@ -57,6 +57,8 @@ Set `CHROMIUM_PATH` to your browser executable and `BASE_URL` to another serving
 
 ## Publish to GitHub Pages
 
-Pages serves the root of `main`. Edit HTML/CSS in `dist` and JavaScript in the source modules. Run `npm run build` to refresh `dist/assets/app.js` and the ready-to-serve root files. Run `npm test`, commit all changed source and built files, and push `main`. Pages deploys the update automatically.
+Pages serves the root of `main`. Edit HTML/CSS in `dist` and JavaScript in the source modules. Run `npm run build` to refresh `dist/assets/app-*.js` and the ready-to-serve root files. Run `npm test`, commit all changed source and built files, and push `main`. Pages deploys the update automatically.
 
 Keep Settings → Pages set to `main` and `/ (root)`. Documents are processed locally; GitHub Pages only serves the application files. No server, API key, or paid conversion service is needed.
+
+Direct editor links: `?tool=pdf#tools` and `?tool=word#tools`. Each build uses a versioned JavaScript filename so updated editor code is loaded after deployment.

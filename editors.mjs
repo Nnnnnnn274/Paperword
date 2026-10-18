@@ -11,11 +11,14 @@ function message(id,text,error=false){$(id).textContent=text;$(id).classList.tog
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function validFile(file,ext,max=25){if(!file||!file.name.toLowerCase().endsWith('.'+ext))throw Error(`Please choose a .${ext} file.`);if(!file.size)throw Error('This file is empty.');if(file.size>max*1024*1024)throw Error(`Choose a file smaller than ${max} MB.`);}
 function friendly(error){if(/encrypt|password/i.test(error.message)||error.name==='PasswordException')return 'This PDF is password-protected. Save an unlocked copy and try again.';return error.message||'The file could not be read. Please try another document.';}
-for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{
+function selectTool(tool,updateUrl=true){
+ const button=document.querySelector(`[data-tool="${tool}"]`);if(!button)return;
  for(const panel of document.querySelectorAll('.tool-panel'))panel.hidden=panel.id!=='panel-'+button.dataset.tool;
  for(const tab of document.querySelectorAll('[data-tool]')){const active=tab===button;tab.classList.toggle('active',active);tab.setAttribute('aria-pressed',String(active));}
  if(button.dataset.tool==='pdf'&&pdfDocument)renderPage();
-};
+ if(updateUrl){const url=new URL(location.href);url.searchParams.set('tool',tool);history.replaceState(null,'',url);}
+}
+for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>selectTool(button.dataset.tool);
 // PDF editor
 let pdfDocument=null,pdfBytes=null,pdfName='document',states=[],current=null,viewport=null,fontBytes=null,renderTask=null,renderGeneration=0,pdfBusy=false;
 async function getFont(){if(!fontBytes){const r=await fetch(new URL('./standard_fonts/LiberationSans-Regular.ttf',import.meta.url));if(!r.ok)throw Error('Could not load the annotation font. Check your connection and try again.');fontBytes=new Uint8Array(await r.arrayBuffer());}return fontBytes;}
@@ -57,3 +60,5 @@ $('merge-input').onchange=e=>{try{const added=[...e.target.files];if(mergeFiles.
 $('merge-save').onclick=async()=>{if(mergeBusy)return;mergeBusy=true;listMerge();try{message('merge-status','Combining your PDFs…');const data=[];for(const file of mergeFiles)data.push(new Uint8Array(await file.arrayBuffer()));download(await mergePdfs(data),'paperword-merged.pdf','application/pdf');message('merge-status','Your combined PDF has been downloaded.');}catch(e){message('merge-status',friendly(e),true);}finally{mergeBusy=false;listMerge();}};
 
 for(const label of document.querySelectorAll('.file-label')){label.tabIndex=0;label.setAttribute('role','button');label.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();label.querySelector('input').click();}};}
+
+selectTool(new URL(location.href).searchParams.get("tool")||"convert",false);
